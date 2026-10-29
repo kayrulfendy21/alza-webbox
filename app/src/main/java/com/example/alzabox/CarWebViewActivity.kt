@@ -18,7 +18,7 @@ class CarWebViewActivity : CarActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(bb: Bundle?) {
         super.onCreate(bb)
-        carUiController.statusBarController.hideAppHeader()
+        getCarUiController().getStatusBarController().hideAppHeader()
         setContentView(R.layout.activity_car_webview)
 
         val prefs = getSharedPreferences("alza_prefs", Context.MODE_PRIVATE)
