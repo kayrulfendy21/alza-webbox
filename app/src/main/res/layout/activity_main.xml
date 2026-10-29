@@ -9,16 +9,16 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Alza AV WebBox Settings"
+        android:text="Alza WebBox (StreamAuto Edition)"
         android:textColor="#FFFFFF"
-        android:textSize="22sp"
+        android:textSize="20sp"
         android:textStyle="bold" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Set the default homepage URL that opens on your Perodua Alza AV display:"
+        android:text="Paste any video or streaming URL below to send it straight to your Perodua Alza AV screen (or use Share -> Alza WebBox inside the YouTube app):"
         android:textColor="#B3B3B3"
         android:textSize="14sp" />
 
@@ -37,6 +37,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Save Default URL" />
+        android:text="Play on Car Now / Save URL" />
 
 </LinearLayout>

@@ -5,37 +5,83 @@
     android:orientation="horizontal"
     android:background="#000000">
 
-    <LinearLayout
-        android:layout_width="64dp"
+    <ScrollView
+        android:layout_width="72dp"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center_horizontal"
-        android:padding="6dp"
         android:background="#181818">
 
-        <Button
-            android:id="@+id/btnBack"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:text="Back"
-            android:textSize="11sp" />
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:padding="4dp">
 
-        <Button
-            android:id="@+id/btnHome"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="8dp"
-            android:text="Home"
-            android:textSize="11sp" />
+            <Button
+                android:id="@+id/btnBack"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:text="◄ Back"
+                android:textSize="10sp" />
 
-        <Button
-            android:id="@+id/btnReload"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="8dp"
-            android:text="Reload"
-            android:textSize="10sp" />
-    </LinearLayout>
+            <Button
+                android:id="@+id/btnReload"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="4dp"
+                android:text="↻"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btnYT"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="8dp"
+                android:text="YouTube"
+                android:textSize="9sp" />
+
+            <Button
+                android:id="@+id/btnViu"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="4dp"
+                android:text="Viu"
+                android:textSize="10sp" />
+
+            <Button
+                android:id="@+id/btnIqiyi"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="4dp"
+                android:text="iQiyi"
+                android:textSize="10sp" />
+
+            <Button
+                android:id="@+id/btnNetflix"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="4dp"
+                android:text="Netflix"
+                android:textSize="9sp" />
+
+            <Button
+                android:id="@+id/btnMode"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="8dp"
+                android:text="Mobile"
+                android:textSize="9sp" />
+
+            <Button
+                android:id="@+id/btnAdBlock"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="4dp"
+                android:text="AdBlk:ON"
+                android:textSize="9sp" />
+
+        </LinearLayout>
+    </ScrollView>
 
     <WebView
         android:id="@+id/carWebView"
