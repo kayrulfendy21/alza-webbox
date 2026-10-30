@@ -5,7 +5,6 @@
     android:orientation="horizontal"
     android:background="#000000">
 
-    <!-- Left Sidebar Controls -->
     <ScrollView
         android:layout_width="72dp"
         android:layout_height="match_parent"
@@ -94,7 +93,6 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Right Content Area: WebView on Top + Docked Virtual Keyboard on Bottom -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
@@ -107,7 +105,6 @@
             android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <!-- Dynamic On-Screen Keyboard Container (Hidden until needed or toggled) -->
         <LinearLayout
             android:id="@+id/keyboardContainer"
             android:layout_width="match_parent"
