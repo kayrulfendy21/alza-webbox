@@ -51,6 +51,15 @@ class CarWebViewActivity : CarActivity() {
         }
     }
 
+    inner class JsBridge {
+        @JavascriptInterface
+        fun showKeyboard() {
+            webView.post {
+                keyboardContainer.visibility = View.VISIBLE
+            }
+        }
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(bb: Bundle?) {
         super.onCreate(bb)
@@ -122,6 +131,7 @@ class CarWebViewActivity : CarActivity() {
     }
 
     private fun buildOnScreenKeyboard() {
+        val ctx = webView.context
         keyboardContainer.removeAllViews()
         letterButtons.clear()
 
@@ -129,11 +139,11 @@ class CarWebViewActivity : CarActivity() {
             listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "@", "."),
             listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "-", "_"),
             listOf("a", "s", "d", "f", "g", "h", "j", "k", "l", "!", "?", "/"),
-            listOf("SHIFT", "z", "x", "c", "v", "b", "n", "m", "SPACE", "⌫", "GO", "HIDE")
+            listOf("SHIFT", "z", "x", "c", "v", "b", "n", "m", "SPACE", "DEL", "GO", "HIDE")
         )
 
         for (rowKeys in rows) {
-            val rowLayout = LinearLayout(this).apply {
+            val rowLayout = LinearLayout(ctx).apply {
                 orientation = LinearLayout.HORIZONTAL
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
@@ -145,12 +155,12 @@ class CarWebViewActivity : CarActivity() {
 
             for (key in rowKeys) {
                 val weight = when (key) {
-                    "SPACE" -> 2.5f
-                    "SHIFT", "⌫", "GO", "HIDE" -> 1.4f
+                    "SPACE" -> 2.4f
+                    "SHIFT", "DEL", "GO", "HIDE" -> 1.4f
                     else -> 1.0f
                 }
 
-                val btn = Button(this).apply {
+                val btn = Button(ctx).apply {
                     text = key
                     isAllCaps = false
                     setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
@@ -160,7 +170,7 @@ class CarWebViewActivity : CarActivity() {
                     setBackgroundColor(
                         when (key) {
                             "GO" -> Color.parseColor("#1A73E8")
-                            "⌫", "SHIFT", "HIDE" -> Color.parseColor("#3C4043")
+                            "DEL", "SHIFT", "HIDE" -> Color.parseColor("#3C4043")
                             else -> Color.parseColor("#5F6368")
                         }
                     )
@@ -191,7 +201,7 @@ class CarWebViewActivity : CarActivity() {
             }
             "HIDE" -> keyboardContainer.visibility = View.GONE
             "SPACE" -> sendKeyToWebView(" ")
-            "⌫" -> sendKeyToWebView("BACKSPACE")
+            "DEL" -> sendKeyToWebView("BACKSPACE")
             "GO" -> {
                 sendKeyToWebView("ENTER")
                 keyboardContainer.visibility = View.GONE
@@ -208,68 +218,31 @@ class CarWebViewActivity : CarActivity() {
     }
 
     private fun sendKeyToWebView(actionOrChar: String) {
-        val safeJsonAction = JSONObject.quote(actionOrChar)
-        val js = """
-            (function(key) {
-                var el = document.activeElement || window.__lastFocusedInput;
-                if (!el || (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA' && !el.isContentEditable)) {
-                    el = document.querySelector('input:not([type="hidden"]), textarea');
-                    if (el) el.focus();
-                }
-                if (!el) return;
-
-                if (key === 'ENTER') {
-                    var down = new KeyboardEvent('keydown', {key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true});
-                    var press = new KeyboardEvent('keypress', {key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true});
-                    var up = new KeyboardEvent('keyup', {key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true});
-                    el.dispatchEvent(down);
-                    el.dispatchEvent(press);
-                    el.dispatchEvent(up);
-                    if (el.form) {
-                        if (el.form.requestSubmit) el.form.requestSubmit();
-                        else el.form.submit();
-                    }
-                    return;
-                }
-
-                if (el.isContentEditable) {
-                    if (key === 'BACKSPACE') document.execCommand('delete', false, null);
-                    else document.execCommand('insertText', false, key);
-                    return;
-                }
-
-                var start = el.selectionStart || el.value.length;
-                var end = el.selectionEnd || el.value.length;
-                var val = el.value || '';
-                var newVal = val;
-                var newPos = start;
-
-                if (key === 'BACKSPACE') {
-                    if (start !== end) {
-                        newVal = val.slice(0, start) + val.slice(end);
-                        newPos = start;
-                    } else if (start > 0) {
-                        newVal = val.slice(0, start - 1) + val.slice(end);
-                        newPos = start - 1;
-                    }
-                } else {
-                    newVal = val.slice(0, start) + key + val.slice(end);
-                    newPos = start + key.length;
-                }
-
-                var proto = el.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
-                var nativeSetter = Object.getOwnPropertyDescriptor(proto, 'value').set;
-                if (nativeSetter) {
-                    nativeSetter.call(el, newVal);
-                } else {
-                    el.value = newVal;
-                }
-
-                try { el.setSelectionRange(newPos, newPos); } catch(e) {}
-                el.dispatchEvent(new Event('input', { bubbles: true }));
-                el.dispatchEvent(new Event('change', { bubbles: true }));
-            })($safeJsonAction);
-        """.trimIndent()
+        val safeKey = JSONObject.quote(actionOrChar)
+        val js = "(function(key){" +
+            "var el=document.activeElement||window.__lastFocusedInput;" +
+            "if(!el||(el.tagName!=='INPUT'&&el.tagName!=='TEXTAREA'&&!el.isContentEditable)){" +
+            "el=document.querySelector('input:not([type=\"hidden\"]),textarea');if(el)el.focus();}" +
+            "if(!el)return;" +
+            "if(key==='ENTER'){" +
+            "var ev=new KeyboardEvent('keydown',{key:'Enter',code:'Enter',keyCode:13,which:13,bubbles:true,cancelable:true});" +
+            "el.dispatchEvent(ev);" +
+            "if(el.form){if(el.form.requestSubmit)el.form.requestSubmit();else el.form.submit();}" +
+            "return;}" +
+            "if(el.isContentEditable){" +
+            "if(key==='BACKSPACE')document.execCommand('delete',false,null);" +
+            "else document.execCommand('insertText',false,key);return;}" +
+            "var s=el.selectionStart||el.value.length;var e=el.selectionEnd||el.value.length;" +
+            "var v=el.value||'';var nv=v;var np=s;" +
+            "if(key==='BACKSPACE'){if(s!==e){nv=v.slice(0,s)+v.slice(e);np=s;}else if(s>0){nv=v.slice(0,s-1)+v.slice(e);np=s-1;}}" +
+            "else{nv=v.slice(0,s)+key+v.slice(e);np=s+key.length;}" +
+            "var pr=el.tagName==='TEXTAREA'?window.HTMLTextAreaElement.prototype:window.HTMLInputElement.prototype;" +
+            "var st=Object.getOwnPropertyDescriptor(pr,'value').set;" +
+            "if(st)st.call(el,nv);else el.value=nv;" +
+            "try{el.setSelectionRange(np,np);}catch(err){}" +
+            "el.dispatchEvent(new Event('input',{bubbles:true}));" +
+            "el.dispatchEvent(new Event('change',{bubbles:true}));" +
+            "})(" + safeKey + ");"
 
         webView.evaluateJavascript(js, null)
     }
@@ -278,7 +251,7 @@ class CarWebViewActivity : CarActivity() {
         return TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
             dp.toFloat(),
-            resources.displayMetrics
+            webView.resources.displayMetrics
         ).toInt()
     }
 
@@ -288,7 +261,7 @@ class CarWebViewActivity : CarActivity() {
         btnMode.text = if (isDesktopMode) "Desktop" else "Mobile"
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
+    @SuppressLint("SetJavaScriptEnabled", "AddJavascriptInterface")
     private fun setupWebView() {
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
@@ -304,14 +277,7 @@ class CarWebViewActivity : CarActivity() {
         settings.loadWithOverviewMode = true
         settings.userAgentString = mobileUA
 
-        webView.addJavascriptInterface(object {
-            @JavascriptInterface
-            fun showKeyboard() {
-                runOnUiThread {
-                    keyboardContainer.visibility = View.VISIBLE
-                }
-            }
-        }, "AlzaKB")
+        webView.addJavascriptInterface(JsBridge(), "AlzaKB")
 
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(
@@ -327,27 +293,12 @@ class CarWebViewActivity : CarActivity() {
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
-                view?.evaluateJavascript(
-                    """
-                    (function() {
-                        document.addEventListener('focusin', function(e) {
-                            var t = e.target;
-                            if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
-                                window.__lastFocusedInput = t;
-                                if (window.AlzaKB) window.AlzaKB.showKeyboard();
-                            }
-                        }, true);
-                        document.addEventListener('click', function(e) {
-                            var t = e.target;
-                            if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
-                                window.__lastFocusedInput = t;
-                                if (window.AlzaKB) window.AlzaKB.showKeyboard();
-                            }
-                        }, true);
-                    })();
-                    """.trimIndent(),
-                    null
-                )
+                val focusHook = "(function(){" +
+                    "function h(e){var t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable)){" +
+                    "window.__lastFocusedInput=t;if(window.AlzaKB)window.AlzaKB.showKeyboard();}}" +
+                    "document.addEventListener('focusin',h,true);document.addEventListener('click',h,true);" +
+                    "})();"
+                view?.evaluateJavascript(focusHook, null)
             }
 
             override fun shouldInterceptRequest(
