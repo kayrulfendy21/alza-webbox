@@ -78,10 +78,7 @@ class CarWebViewActivity : CarActivity() {
         setupWebView()
         buildOnScreenKeyboard()
 
-        btnKeyboard.setOnClickListener {
-            toggleKeyboard()
-        }
-
+        btnKeyboard.setOnClickListener { toggleKeyboard() }
         btnBack.setOnClickListener { if (webView.canGoBack()) webView.goBack() }
         btnReload.setOnClickListener { webView.reload() }
 
@@ -176,10 +173,7 @@ class CarWebViewActivity : CarActivity() {
                     letterButtons.add(btn)
                 }
 
-                btn.setOnClickListener {
-                    handleKeyPress(key)
-                }
-
+                btn.setOnClickListener { handleKeyPress(key) }
                 rowLayout.addView(btn)
             }
             keyboardContainer.addView(rowLayout)
@@ -333,7 +327,6 @@ class CarWebViewActivity : CarActivity() {
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
-                // Automatically remember the last focused input box and pop up the car keyboard on tap
                 view?.evaluateJavascript(
                     """
                     (function() {
