@@ -5,6 +5,7 @@
     android:orientation="horizontal"
     android:background="#000000">
 
+    <!-- Left Sidebar Controls -->
     <ScrollView
         android:layout_width="72dp"
         android:layout_height="match_parent"
@@ -18,16 +19,26 @@
             android:padding="4dp">
 
             <Button
-                android:id="@+id/btnBack"
+                android:id="@+id/btnKeyboard"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
+                android:backgroundTint="#2E7D32"
+                android:text="⌨️ KB"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp" />
+
+            <Button
+                android:id="@+id/btnBack"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:layout_marginTop="4dp"
                 android:text="◄ Back"
                 android:textSize="10sp" />
 
             <Button
                 android:id="@+id/btnReload"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
+                android:layout_height="42dp"
                 android:layout_marginTop="4dp"
                 android:text="↻"
                 android:textSize="12sp" />
@@ -35,15 +46,15 @@
             <Button
                 android:id="@+id/btnYT"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="42dp"
+                android:layout_marginTop="6dp"
                 android:text="YouTube"
                 android:textSize="9sp" />
 
             <Button
                 android:id="@+id/btnViu"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
+                android:layout_height="42dp"
                 android:layout_marginTop="4dp"
                 android:text="Viu"
                 android:textSize="10sp" />
@@ -51,7 +62,7 @@
             <Button
                 android:id="@+id/btnIqiyi"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
+                android:layout_height="42dp"
                 android:layout_marginTop="4dp"
                 android:text="iQiyi"
                 android:textSize="10sp" />
@@ -59,7 +70,7 @@
             <Button
                 android:id="@+id/btnNetflix"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
+                android:layout_height="42dp"
                 android:layout_marginTop="4dp"
                 android:text="Netflix"
                 android:textSize="9sp" />
@@ -67,15 +78,15 @@
             <Button
                 android:id="@+id/btnMode"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="42dp"
+                android:layout_marginTop="6dp"
                 android:text="Mobile"
                 android:textSize="9sp" />
 
             <Button
                 android:id="@+id/btnAdBlock"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
+                android:layout_height="42dp"
                 android:layout_marginTop="4dp"
                 android:text="AdBlk:ON"
                 android:textSize="9sp" />
@@ -83,10 +94,29 @@
         </LinearLayout>
     </ScrollView>
 
-    <WebView
-        android:id="@+id/carWebView"
+    <!-- Right Content Area: WebView on Top + Docked Virtual Keyboard on Bottom -->
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <WebView
+            android:id="@+id/carWebView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Dynamic On-Screen Keyboard Container (Hidden until needed or toggled) -->
+        <LinearLayout
+            android:id="@+id/keyboardContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#202124"
+            android:padding="4dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
 
 </LinearLayout>

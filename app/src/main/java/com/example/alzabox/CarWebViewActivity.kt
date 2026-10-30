@@ -3,8 +3,13 @@ package com.example.alzabox
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
+import android.graphics.Color
 import android.os.Bundle
+import android.util.TypedValue
+import android.view.Gravity
+import android.view.View
 import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -13,15 +18,20 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
+import android.widget.LinearLayout
 import com.google.android.apps.auto.sdk.CarActivity
+import org.json.JSONObject
 import java.io.ByteArrayInputStream
 
 class CarWebViewActivity : CarActivity() {
 
     private lateinit var webView: WebView
+    private lateinit var keyboardContainer: LinearLayout
     private lateinit var prefs: SharedPreferences
     private var isDesktopMode = false
     private var isAdBlockEnabled = true
+    private var isShiftEnabled = false
+    private val letterButtons = mutableListOf<Button>()
 
     private val mobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"
     private val desktopUA = "Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
@@ -53,6 +63,9 @@ class CarWebViewActivity : CarActivity() {
         val homeUrl = prefs.getString("home_url", "https://m.youtube.com") ?: "https://m.youtube.com"
 
         webView = findViewById(R.id.carWebView) as WebView
+        keyboardContainer = findViewById(R.id.keyboardContainer) as LinearLayout
+
+        val btnKeyboard = findViewById(R.id.btnKeyboard) as Button
         val btnBack = findViewById(R.id.btnBack) as Button
         val btnReload = findViewById(R.id.btnReload) as Button
         val btnYT = findViewById(R.id.btnYT) as Button
@@ -63,6 +76,11 @@ class CarWebViewActivity : CarActivity() {
         val btnAdBlock = findViewById(R.id.btnAdBlock) as Button
 
         setupWebView()
+        buildOnScreenKeyboard()
+
+        btnKeyboard.setOnClickListener {
+            toggleKeyboard()
+        }
 
         btnBack.setOnClickListener { if (webView.canGoBack()) webView.goBack() }
         btnReload.setOnClickListener { webView.reload() }
@@ -72,7 +90,6 @@ class CarWebViewActivity : CarActivity() {
             webView.loadUrl("https://m.youtube.com")
         }
 
-        // Viu, iQiyi, and Netflix work best in Desktop mode so they don't redirect to the Play Store
         btnViu.setOnClickListener {
             setDesktopMode(true, btnMode)
             webView.loadUrl("https://www.viu.com")
@@ -102,6 +119,175 @@ class CarWebViewActivity : CarActivity() {
         webView.loadUrl(homeUrl)
     }
 
+    private fun toggleKeyboard() {
+        keyboardContainer.visibility =
+            if (keyboardContainer.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+    }
+
+    private fun buildOnScreenKeyboard() {
+        keyboardContainer.removeAllViews()
+        letterButtons.clear()
+
+        val rows = listOf(
+            listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "@", "."),
+            listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "-", "_"),
+            listOf("a", "s", "d", "f", "g", "h", "j", "k", "l", "!", "?", "/"),
+            listOf("SHIFT", "z", "x", "c", "v", "b", "n", "m", "SPACE", "⌫", "GO", "HIDE")
+        )
+
+        for (rowKeys in rows) {
+            val rowLayout = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    dpToPx(38)
+                ).apply {
+                    bottomMargin = dpToPx(2)
+                }
+            }
+
+            for (key in rowKeys) {
+                val weight = when (key) {
+                    "SPACE" -> 2.5f
+                    "SHIFT", "⌫", "GO", "HIDE" -> 1.4f
+                    else -> 1.0f
+                }
+
+                val btn = Button(this).apply {
+                    text = key
+                    isAllCaps = false
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+                    setTextColor(Color.WHITE)
+                    setPadding(0, 0, 0, 0)
+                    gravity = Gravity.CENTER
+                    setBackgroundColor(
+                        when (key) {
+                            "GO" -> Color.parseColor("#1A73E8")
+                            "⌫", "SHIFT", "HIDE" -> Color.parseColor("#3C4043")
+                            else -> Color.parseColor("#5F6368")
+                        }
+                    )
+                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, weight).apply {
+                        setMargins(dpToPx(2), 0, dpToPx(2), 0)
+                    }
+                }
+
+                if (key.length == 1 && key[0].isLetter()) {
+                    letterButtons.add(btn)
+                }
+
+                btn.setOnClickListener {
+                    handleKeyPress(key)
+                }
+
+                rowLayout.addView(btn)
+            }
+            keyboardContainer.addView(rowLayout)
+        }
+    }
+
+    private fun handleKeyPress(key: String) {
+        when (key) {
+            "SHIFT" -> {
+                isShiftEnabled = !isShiftEnabled
+                for (b in letterButtons) {
+                    val current = b.text.toString()
+                    b.text = if (isShiftEnabled) current.uppercase() else current.lowercase()
+                }
+            }
+            "HIDE" -> keyboardContainer.visibility = View.GONE
+            "SPACE" -> sendKeyToWebView(" ")
+            "⌫" -> sendKeyToWebView("BACKSPACE")
+            "GO" -> {
+                sendKeyToWebView("ENTER")
+                keyboardContainer.visibility = View.GONE
+            }
+            else -> {
+                val outChar = if (key.length == 1 && key[0].isLetter() && isShiftEnabled) {
+                    key.uppercase()
+                } else {
+                    key
+                }
+                sendKeyToWebView(outChar)
+            }
+        }
+    }
+
+    private fun sendKeyToWebView(actionOrChar: String) {
+        val safeJsonAction = JSONObject.quote(actionOrChar)
+        val js = """
+            (function(key) {
+                var el = document.activeElement || window.__lastFocusedInput;
+                if (!el || (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA' && !el.isContentEditable)) {
+                    el = document.querySelector('input:not([type="hidden"]), textarea');
+                    if (el) el.focus();
+                }
+                if (!el) return;
+
+                if (key === 'ENTER') {
+                    var down = new KeyboardEvent('keydown', {key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true});
+                    var press = new KeyboardEvent('keypress', {key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true});
+                    var up = new KeyboardEvent('keyup', {key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true});
+                    el.dispatchEvent(down);
+                    el.dispatchEvent(press);
+                    el.dispatchEvent(up);
+                    if (el.form) {
+                        if (el.form.requestSubmit) el.form.requestSubmit();
+                        else el.form.submit();
+                    }
+                    return;
+                }
+
+                if (el.isContentEditable) {
+                    if (key === 'BACKSPACE') document.execCommand('delete', false, null);
+                    else document.execCommand('insertText', false, key);
+                    return;
+                }
+
+                var start = el.selectionStart || el.value.length;
+                var end = el.selectionEnd || el.value.length;
+                var val = el.value || '';
+                var newVal = val;
+                var newPos = start;
+
+                if (key === 'BACKSPACE') {
+                    if (start !== end) {
+                        newVal = val.slice(0, start) + val.slice(end);
+                        newPos = start;
+                    } else if (start > 0) {
+                        newVal = val.slice(0, start - 1) + val.slice(end);
+                        newPos = start - 1;
+                    }
+                } else {
+                    newVal = val.slice(0, start) + key + val.slice(end);
+                    newPos = start + key.length;
+                }
+
+                var proto = el.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+                var nativeSetter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+                if (nativeSetter) {
+                    nativeSetter.call(el, newVal);
+                } else {
+                    el.value = newVal;
+                }
+
+                try { el.setSelectionRange(newPos, newPos); } catch(e) {}
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+            })($safeJsonAction);
+        """.trimIndent()
+
+        webView.evaluateJavascript(js, null)
+    }
+
+    private fun dpToPx(dp: Int): Int {
+        return TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            dp.toFloat(),
+            resources.displayMetrics
+        ).toInt()
+    }
+
     private fun setDesktopMode(enableDesktop: Boolean, btnMode: Button) {
         isDesktopMode = enableDesktop
         webView.settings.userAgentString = if (isDesktopMode) desktopUA else mobileUA
@@ -124,17 +310,51 @@ class CarWebViewActivity : CarActivity() {
         settings.loadWithOverviewMode = true
         settings.userAgentString = mobileUA
 
+        webView.addJavascriptInterface(object {
+            @JavascriptInterface
+            fun showKeyboard() {
+                runOnUiThread {
+                    keyboardContainer.visibility = View.VISIBLE
+                }
+            }
+        }, "AlzaKB")
+
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(
                 view: WebView?,
                 request: WebResourceRequest?
             ): Boolean {
                 val url = request?.url?.toString() ?: return false
-                // Block intent:// links from kicking the user out to the Play Store
                 if (!url.startsWith("http://") && !url.startsWith("https://")) {
                     return true
                 }
                 return false
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                // Automatically remember the last focused input box and pop up the car keyboard on tap
+                view?.evaluateJavascript(
+                    """
+                    (function() {
+                        document.addEventListener('focusin', function(e) {
+                            var t = e.target;
+                            if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
+                                window.__lastFocusedInput = t;
+                                if (window.AlzaKB) window.AlzaKB.showKeyboard();
+                            }
+                        }, true);
+                        document.addEventListener('click', function(e) {
+                            var t = e.target;
+                            if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
+                                window.__lastFocusedInput = t;
+                                if (window.AlzaKB) window.AlzaKB.showKeyboard();
+                            }
+                        }, true);
+                    })();
+                    """.trimIndent(),
+                    null
+                )
             }
 
             override fun shouldInterceptRequest(
@@ -156,7 +376,6 @@ class CarWebViewActivity : CarActivity() {
         }
 
         webView.webChromeClient = object : WebChromeClient() {
-            // Grant Widevine DRM permission (RESOURCE_PROTECTED_MEDIA_ID) for streaming sites
             override fun onPermissionRequest(request: PermissionRequest?) {
                 request?.let {
                     it.grant(it.resources)
