@@ -15,10 +15,30 @@
         android:textStyle="bold" />
 
     <TextView
+        android:id="@+id/txtInstallStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:padding="10dp"
+        android:background="#1E1E1E"
+        android:text="Checking installer status..."
+        android:textColor="#81C784"
+        android:textSize="13sp" />
+
+    <Button
+        android:id="@+id/btnSelfInstall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:backgroundTint="#2E7D32"
+        android:text="1. Activate for Android Auto (Self-Install)"
+        android:textColor="#FFFFFF" />
+
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Paste any video or streaming URL below to send it straight to your Perodua Alza AV screen (or use Share -> Alza WebBox inside the YouTube app):"
+        android:layout_marginTop="20dp"
+        android:text="Default Homepage / Cast URL to Car Screen:"
         android:textColor="#B3B3B3"
         android:textSize="14sp" />
 
@@ -26,7 +46,7 @@
         android:id="@+id/editDefaultUrl"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:hint="https://m.youtube.com"
         android:inputType="textUri"
         android:textColor="#FFFFFF"
@@ -36,7 +56,7 @@
         android:id="@+id/btnSaveUrl"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Play on Car Now / Save URL" />
+        android:layout_marginTop="12dp"
+        android:text="2. Play on Car Now / Save URL" />
 
 </LinearLayout>
